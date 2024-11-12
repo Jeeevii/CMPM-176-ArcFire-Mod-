@@ -58,10 +58,14 @@ let arcFrom;
 let arcTo;
 let shots;
 let isPressing;
+
 let enemies;
-let innocents;
 let enemyAddAngle;
 let enemyAddTicks;
+
+let innocents;
+let innocentsRoamTicks;
+let innocentsRoamAngle;
 let multiplier;
 
 function update() {
@@ -74,9 +78,16 @@ function update() {
     moveAngle = 0;
     moveDist = 0;
     enemies = [];
-    innocents = [];
+    innocents = times(10, () => ({
+      pos: vec(rnd(40, 60), rnd(40, 60)),
+      targetPos: vec(rnd(40, 60), rnd(40, 60)),
+      vel: vec(),
+      ticks: rnd(60),
+    }));;
     enemyAddAngle = rnd(PI * 2);
     enemyAddTicks = 0;
+    innocentsRoamTicks = 0;
+    innocentsRoamAngle = rnd(PI * 2);
   }
 
   // moves player based on released shot
