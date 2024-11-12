@@ -1,0 +1,10 @@
+
+# commands for set up
+cd docs/arcfire
+npm run watch_games
+
+local server - http://localhost:4000/?arcfire 
+
+
+# notes
+modify main.js to implement mod 
