@@ -24,6 +24,26 @@ l l
 llll
     l
 `,
+
+`
+ll
+l
+llll
+l l
+l ll
+l
+`,
+`
+ ll
+l
+llll
+l
+ll l
+  l
+`,
+
+
+
   ``,
   `
  llll
@@ -83,6 +103,8 @@ function update() {
       targetPos: vec(rnd(40, 60), rnd(40, 60)),
       vel: vec(),
       ticks: rnd(60),
+      wandering: false,
+      
     }));;
     enemyAddAngle = rnd(PI * 2);
     enemyAddTicks = 0;
@@ -163,13 +185,13 @@ function update() {
   // spawns new enemies 
   enemyAddTicks -= difficulty; 
   if (enemyAddTicks < 0) {
-    const p = vec(70).rotate(enemyAddAngle).add(50, 50);
-    const v = vec(rnd(10))
+    const pos = vec(70).rotate(enemyAddAngle).add(50, 50);
+    const vel = vec(rnd(10))
       .rotate(rnd(PI * 2))
       .add(50, 50)
-      .sub(p)
+      .sub(pos)
       .div(500 / rnd(1, difficulty));
-    enemies.push({ p, v });
+    enemies.push({ pos, vel });
     enemyAddTicks += rnd(40, 60);
     if (rnd() < 0.1) {
       enemyAddAngle = rnd(PI * 2);
@@ -177,23 +199,84 @@ function update() {
       enemyAddAngle += rnds(0.05);
     }
   }
-  
 
+  innocentsRoamTicks -= difficulty;
+  if (innocentsRoamTicks < 0) {
+    console.log("innocents roaming");
+    let n = Math.floor(rnd(0, innocents.length));
+    innocents[n].wandering = true;
+    innocents[n].targetPos.set(rnd(15, 85), rnd(15, 85));
+    innocentsRoamTicks = 150;
+  }
+  
+  // updates innocents
+  color("green");
+  remove(innocents, (h) => {
+    let ta; // target angle to run towards
+
+
+    // makes innocents run away from enemies
+    if (enemies.length > 0) {
+      const ne = getNearestActor(enemies, h.pos);
+      if (ne.pos.distanceTo(h.pos) < 25) {
+        ta = ne.pos.angleTo(h.pos); // sets angle to run away from enemy
+      }
+    }
+
+    // if wandering 
+    if (h.wandering) {
+      ta = h.pos.angleTo(h.targetPos);
+      if (h.pos.distanceTo(h.targetPos) < 1) {
+        h.targetPos.set(rnd(15, 85), rnd(15, 85));
+      }
+    }
+
+    // resets target position to center of screen
+    if (ta == null) {
+      if (h.pos.distanceTo(h.targetPos) < 1) {
+        h.targetPos.set(rnd(40, 60), rnd(40, 60));
+      }
+      ta = h.pos.angleTo(h.targetPos);
+    }
+
+
+
+    h.vel.addWithAngle(ta, 0.01);
+    h.vel.mul(0.8);
+    let px = h.pos.x;
+    h.pos.add(vec(h.vel).mul(difficulty));
+    h.pos.clamp(10, 90, 10, 90);
+    h.ticks += difficulty;
+    const c = char(addWithCharCode("c", floor(h.ticks / 30) % 2), h.pos, {
+      mirror: { x: h.pos.x > px ? 1 : -1 },
+    });
+    if (c.isColliding.rect.black) {
+      play("explosion");
+      particle(h.pos, 9, 2);
+      return true;
+    }
+
+    if (c.isColliding.rect.red) {
+      play("explosion");
+      particle(h.pos, 9, 2);
+      return true;
+    }
+  });
 
   // updates enemies 
   color("red");
   enemies = enemies.filter((e) => {
     // e refers to enemies. enemies made up of {p, v}
-    e.p.add(e.v);
-    const c = char(addWithCharCode("d", floor(ticks / 30) % 2), e.p, {
-      mirror: { x: cos(e.v.angle) < 0 ? -1 : 1 },
+    e.pos.add(e.vel);
+    const c = char(addWithCharCode("e", floor(ticks / 30) % 2), e.pos, {
+      mirror: { x: cos(e.vel.angle) < 0 ? -1 : 1 },
     }).isColliding;
 
     // if enemy is hit by the arc
     if (c.rect.cyan) {
       play("powerUp");
-      particle(e.p);
-      addScore(multiplier, e.p);
+      particle(e.pos);
+      addScore(multiplier, e.pos);
       multiplier++;
       return false;
     }
@@ -201,7 +284,7 @@ function update() {
     // if enemy reaches player or circle
     if (c.char.a || c.char.b || c.rect.light_blue) {
       if (c.rect.light_blue) {
-        text("X", vec(e.p).sub(50, 50).div(2).add(50, 50));
+        text("X", vec(e.pos).sub(50, 50).div(2).add(50, 50));
       } else {
         text("X", pos);
       }
@@ -209,5 +292,11 @@ function update() {
       end();
     }
     return true;
+  });
+}
+
+function getNearestActor(actors, pos) {
+  return actors.reduce((a, b) => {
+    return a.pos.distanceTo(pos) < b.pos.distanceTo(pos) ? a : b;
   });
 }
