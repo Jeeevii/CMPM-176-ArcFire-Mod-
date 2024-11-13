@@ -250,13 +250,17 @@ function update() {
     const c = char(addWithCharCode("c", floor(h.ticks / 30) % 2), h.pos, {
       mirror: { x: h.pos.x > px ? 1 : -1 },
     });
-    if (c.isColliding.rect.black) {
+
+
+    if (c.isColliding.char.a || c.isColliding.char.b) {
+      console.log("end wandering");
+      h.targetPos.set(rnd(40, 60), rnd(40, 60));
       play("explosion");
-      particle(h.pos, 9, 2);
-      return true;
+      h.wandering = false;
     }
 
     if (c.isColliding.rect.red) {
+      console.log("innocnet hit");
       play("explosion");
       particle(h.pos, 9, 2);
       return true;
@@ -268,7 +272,7 @@ function update() {
   enemies = enemies.filter((e) => {
     // e refers to enemies. enemies made up of {p, v}
     e.pos.add(e.vel);
-    const c = char(addWithCharCode("e", floor(ticks / 30) % 2), e.pos, {
+    const c = char(addWithCharCode("f", floor(ticks / 30) % 2), e.pos, {
       mirror: { x: cos(e.vel.angle) < 0 ? -1 : 1 },
     }).isColliding;
 
