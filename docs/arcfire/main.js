@@ -98,13 +98,12 @@ function update() {
     moveAngle = 0;
     moveDist = 0;
     enemies = [];
-    innocents = times(10, () => ({
+    innocents = times(4, () => ({
       pos: vec(rnd(40, 60), rnd(40, 60)),
       targetPos: vec(rnd(40, 60), rnd(40, 60)),
       vel: vec(),
       ticks: rnd(60),
       wandering: false,
-      
     }));;
     enemyAddAngle = rnd(PI * 2);
     enemyAddTicks = 0;
@@ -115,7 +114,7 @@ function update() {
   // moves player based on released shot
   if (moveDist > 1) {
     pos.add(vec(moveDist * 0.2).rotate(moveAngle));
-    moveDist *= 0.2;
+    moveDist *= 0.6;
     if (!pos.isInRect(10, 10, 90, 90)) {
       moveAngle += PI;
     }
@@ -252,14 +251,15 @@ function update() {
     });
 
 
-    if (c.isColliding.char.a || c.isColliding.char.b) {
+    if ((c.isColliding.char.a || c.isColliding.char.b) && h.wandering) {
       console.log("end wandering");
       h.targetPos.set(rnd(40, 60), rnd(40, 60));
+      particle(h.pos, 9, 2);
       play("explosion");
       h.wandering = false;
     }
 
-    if (c.isColliding.rect.red) {
+    if (c.isColliding.char.e || c.isColliding.char.f) {
       console.log("innocnet hit");
       play("explosion");
       particle(h.pos, 9, 2);
@@ -295,8 +295,13 @@ function update() {
       play("lucky");
       end();
     }
+    if (c.char.c || c.char.d) {
+      text("X", e.pos);
+      end();
+    }
     return true;
   });
+
 }
 
 function getNearestActor(actors, pos) {
