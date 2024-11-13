@@ -99,12 +99,11 @@ function update() {
     moveAngle = 0;
     moveDist = 0;
     enemies = [];
-    innocents = times(2, () => ({
+    innocents = times(3, () => ({
       pos: vec(rnd(40, 60), rnd(40, 60)),
       targetPos: vec(rnd(40, 60), rnd(40, 60)),
       vel: vec(),
       ticks: rnd(60),
-      wandering: false,
     }));;
     roamers = [];
     enemyAddAngle = rnd(PI * 2);
@@ -205,7 +204,10 @@ function update() {
   innocentsRoamTicks -= difficulty;
   if (innocentsRoamTicks < 0) {
     if (innocents.length > 0) {
-      roamers.push(innocents.pop());
+      let new_roamer = innocents.shift();
+      new_roamer.targetPos.set(rnd(40, 60), rnd(40, 60));
+      roamers.push(new_roamer);
+      innocentsRoamTicks = 450;
     }
     else {
     innocents.push({
@@ -213,15 +215,12 @@ function update() {
       targetPos: vec(rnd(40, 60), rnd(40, 60)),
       vel: vec(),
       ticks: rnd(60),
-      wandering: true,
-    })};
-    console.log("innocents roaming");
-    // let n = Math.floor(rnd(0, innocents.length));
-    // innocents[n].wandering = true;
-    // innocents[n].targetPos.set(rnd(15, 85), rnd(15, 85));
-    innocentsRoamTicks = 700;
+    })
+    innocentsRoamTicks = 800;
+    };
   }
   
+  // roamer updates
   color("green");
   remove(roamers, (h) => {
     let ta;
@@ -246,7 +245,6 @@ function update() {
       addScore(10, h.pos);
       particle(h.pos, 9, 2);
       play("explosion");
-      h.wandering = false;
       innocents.push(h);
       return true;
     }
@@ -266,7 +264,7 @@ function update() {
       }
     }
 
-    // resets target position to center of screen
+    // refresh target roaming
     if (ta == null) {
       if (h.pos.distanceTo(h.targetPos) < 1) {
         h.targetPos.set(rnd(40, 60), rnd(40, 60));
@@ -274,10 +272,8 @@ function update() {
       ta = h.pos.angleTo(h.targetPos);
     }
 
-
-
     h.vel.addWithAngle(ta, 0.01);
-    h.vel.mul(0.8);
+    h.vel.mul(0.9);
     let px = h.pos.x;
     h.pos.add(vec(h.vel).mul(difficulty));
     h.pos.clamp(10, 90, 10, 90);
@@ -285,16 +281,6 @@ function update() {
     const c = char(addWithCharCode("c", floor(h.ticks / 30) % 2), h.pos, {
       mirror: { x: h.pos.x > px ? 1 : -1 },
     });
-
-
-    // if ((c.isColliding.char.a || c.isColliding.char.b) && h.wandering) {
-    //   console.log("end wandering");
-    //   h.targetPos.set(rnd(40, 60), rnd(40, 60));
-    //   addScore(10, h.pos);
-    //   particle(h.pos, 9, 2);
-    //   play("explosion");
-    //   h.wandering = false;
-    // }
 
     if (c.isColliding.char.e || c.isColliding.char.f) {
       console.log("innocent hit");
